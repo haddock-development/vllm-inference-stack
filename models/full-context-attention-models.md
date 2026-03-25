@@ -46,28 +46,61 @@ vllm serve deepseek-ai/DeepSeek-V2-Lite-Chat \
   --gpu-memory-utilization 0.9
 ```
 
-### GLM-4 Familie
+### GLM-4 Familie (z.ai / GLM Tech) - Alle mit MLA! 🎯
 
-| Modell | Params | MLA | Max Context | Q4 Größe | VRAM |
-|--------|--------|-----|-------------|----------|------|
-| **GLM-4-9B-Chat** | 9B | ✅ | 128K | ~5.5GB | 6GB+ |
-| **GLM-4-9B-Chat-1M** | 9B | ✅ | **1M** | ~5.5GB | 8GB+ |
+| Modell | Params | MLA | Vision | Max Context | Q4 Größe | VRAM | Status |
+|--------|--------|-----|--------|-------------|----------|------|--------|
+| **GLM-4-9B-Chat** | 9B | ✅ | ❌ | 128K | ~5.5GB | 6GB+ | ✅ Passt |
+| **GLM-4-9B-Chat-1M** | 9B | ✅ | ❌ | **1M** | ~5.5GB | 8GB+ | ✅ Passt |
+| **GLM-4.6V-Flash** | 10.3B | ✅ | ✅ | 128K | ~6GB | 10GB+ | ⚠️ Knapp |
+| **GLM-4.7-Flash** | 31B MoE | ✅ | ❌ | 128K | ~17GB | 20GB+ | ❌ Zu groß |
 
 **GGUF Downloads:**
 ```bash
-# GLM-4-9B-Chat-1M (Ultra-long context)
+# GLM-4-9B-Chat-1M (Passt auf Laptop!)
 hf download gaianet/glm-4-9b-chat-1m-GGUF glm-4-9b-chat-1m-Q4_0.gguf --local-dir ~/models
+
+# GLM-4.6V-Flash (Vision, MLA - braucht 10GB+ VRAM)
+hf download unsloth/GLM-4.6V-Flash-GGUF GLM-4.6V-Flash-Q4_K_M.gguf --local-dir ~/models
+hf download unsloth/GLM-4.6V-Flash-GGUF mmproj-F16.gguf --local-dir ~/models
+
+# GLM-4.7-Flash (31B MoE - braucht 20GB+ VRAM)
+hf download unsloth/GLM-4.7-Flash-GGUF GLM-4.7-Flash-Q4_K_M.gguf --local-dir ~/models
 ```
 
 **vLLM Start:**
 ```bash
+# GLM-4-9B-Chat-1M (Laptop 8GB)
 vllm serve THUDM/glm-4-9b-chat-1m \
   --host 0.0.0.0 \
   --port 18103 \
   --max-model-len 65536 \
   --enable-chunked-prefill \
   --gpu-memory-utilization 0.9
+
+# GLM-4.6V-Flash (12GB+ VRAM)
+vllm serve zai-org/GLM-4.6V-Flash \
+  --host 0.0.0.0 \
+  --port 18104 \
+  --max-model-len 32768 \
+  --enable-chunked-prefill \
+  --gpu-memory-utilization 0.9
+
+# GLM-4.7-Flash (24GB+ VRAM)
+vllm serve zai-org/GLM-4.7-Flash \
+  --host 0.0.0.0 \
+  --port 18105 \
+  --max-model-len 32768 \
+  --enable-chunked-prefill \
+  --gpu-memory-utilization 0.95
 ```
+
+**GLM-4.7-Flash Highlights:**
+- 🏆 **31B MoE** (Multi-Expert Architecture)
+- ✅ **MLA** (Multi-head Latent Attention)
+- 🚀 **MIT License** - Full Open Source
+- 📊 **3.7M Downloads** - Very Popular
+- 🌐 Bilingual (EN, ZH)
 
 ---
 
@@ -190,10 +223,20 @@ vllm serve microsoft/Phi-3.5-mini-instruct \
 
 ## Vergleichstabelle: Alle Modelle
 
-| Modell | Params | MLA/DSA | Max Ctx | Q4 Size | Best For |
-|--------|--------|---------|---------|---------|----------|
-| **DeepSeek-V2-Lite** | 15.7B | ✅ MLA | 128K | 10GB | Code, Long Ctx |
-| **GLM-4-9B-1M** | 9B | ✅ MLA | **1M** | 5.5GB | Ultra-long Docs |
+### MLA/DSA Modelle (Full Context Attention) 🎯
+
+| Modell | Params | MLA | Vision | Max Ctx | Q4 Size | VRAM | Status |
+|--------|--------|-----|--------|---------|---------|------|--------|
+| **GLM-4-9B-Chat-1M** | 9B | ✅ | ❌ | **1M** | 5.5GB | 8GB | ✅ Laptop |
+| **GLM-4-9B-Chat** | 9B | ✅ | ❌ | 128K | 5.5GB | 6GB | ✅ Laptop |
+| **GLM-4.6V-Flash** | 10.3B | ✅ | ✅ | 128K | 6GB | 10GB | ⚠️ Knapp |
+| **GLM-4.7-Flash** | 31B | ✅ | ❌ | 128K | 17GB | 20GB | ❌ Server |
+| **DeepSeek-V2-Lite** | 15.7B | ✅ | ❌ | 128K | 10GB | 12GB | ⚠️ Knapp |
+| **DeepSeek-Coder-V2-Lite** | 15.7B | ✅ | ❌ | 128K | 10GB | 12GB | ⚠️ Code |
+
+### Standard Long Context Modelle
+
+| Modell | Params | MLA | Vision | Max Ctx | Q4 Size | Best For |
 | **Gemma-3-4B-VL** | 4B | ❌ | 128K | 2.4GB | Vision + Long Ctx |
 | **Qwen3.5-4B** | 4B | ❌ | 32K | 2.4GB | Text Quality |
 | **LFM2.5-VL-1.6B** | 1.6B | ❌ | 32K | 700MB | Vision, Edge |
@@ -262,10 +305,15 @@ MODELS_DIR=~/models
 mkdir -p $MODELS_DIR
 
 # === MLA/DSA Modelle (Full Context Attention) ===
-echo "=== MLA/DSA Modelle ==="
+echo "=== GLM-4 Familie (MLA) - Alle mit Full Context Attention! ==="
+hf download gaianet/glm-4-9b-chat-1m-GGUF glm-4-9b-chat-1m-Q4_0.gguf --local-dir $MODELS_DIR
+hf download unsloth/GLM-4.6V-Flash-GGUF GLM-4.6V-Flash-Q4_K_M.gguf --local-dir $MODELS_DIR
+hf download unsloth/GLM-4.6V-Flash-GGUF mmproj-F16.gguf --local-dir $MODELS_DIR
+hf download unsloth/GLM-4.7-Flash-GGUF GLM-4.7-Flash-Q4_K_M.gguf --local-dir $MODELS_DIR
+
+echo "=== DeepSeek-V2-Lite (MLA) ==="
 hf download mradermacher/DeepSeek-V2-Lite-GGUF DeepSeek-V2-Lite.Q4_K_M.gguf --local-dir $MODELS_DIR
 hf download bartowski/DeepSeek-Coder-V2-Lite-Instruct-GGUF DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M.gguf --local-dir $MODELS_DIR
-hf download gaianet/glm-4-9b-chat-1m-GGUF glm-4-9b-chat-1m-Q4_0.gguf --local-dir $MODELS_DIR
 
 # === Aktuelle Top Modelle (2026) ===
 echo "=== Qwen3.5 ==="
